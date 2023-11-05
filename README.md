@@ -21,3 +21,9 @@ Lubos Kuzma (https://www.linkedin.com/in/lubos-kuzma-0719a586)
 - general improvements to Help (no arguments)
 - general improvements to arguments
 - create installation mechanism (make file or install script) for Linux
+- create installation mechanism (make file or install script) for Windows
+- create installation mechanism (make file or install script) for Mac
+- pre-requirements installer
+- any other improvements you can think of
+- Python version(s)? (this might be pretty big undertaking)
+- Combined tolchain
