@@ -1,11 +1,14 @@
-#! /bin/bash
+#!/bin/bash
+
+
 # Created by Lubos Kuzma
-# Hassan Olowookere
+# Updated by Hassan Olowookere
 # ISS Program, SADT, SAIT
 # November 2023
 
-
+# Check if the number of arguments is less than 1
 if [ $# -lt 1 ]; then
+	# Print usage information
 	echo "Usage:"
 	echo ""
 	echo "x86_toolchain.sh [ options ] <assembly filename> [-o | --output <output filename>]"
@@ -17,11 +20,11 @@ if [ $# -lt 1 ]; then
 	echo "-q | --qemu                   Run executable in QEMU emulator. This will execute the program."
 	echo "-32| --x64              Compile for 32bit (x64) system."
 	echo "-o | --output <filename>      Output filename."
-
+	# Exit the script with an error code
 	exit 1
 fi
 
-POSITIONAL_ARGS=()
+# Initialize variables
 GDB=False
 OUTPUT_FILE=""
 VERBOSE=False
@@ -29,6 +32,8 @@ BITS=True
 QEMU=False
 BREAK="_start"
 RUN=False
+
+# Parse command line arguments
 while [[ $# -gt 0 ]]; do
 	case $1 in
 		-g|--gdb)
@@ -66,114 +71,82 @@ while [[ $# -gt 0 ]]; do
 			exit 1
 			;;
 		*)
-			POSITIONAL_ARGS+=("$1") # save positional arg
+			POSITIONAL_ARGS="$1" # save positional arg
 			shift # past argument
 			;;
 	esac
 done
 
-set -- "${POSITIONAL_ARGS[@]}" # restore positional parameters
-
-if [[ ! -f $1 ]]; then
+# Check if the input file exists
+if [[ ! -f $POSITIONAL_ARGS ]]; then
 	echo "Specified file does not exist"
 	exit 1
 fi
 
+# Set the output filename based on the input filename if not provided
 if [ "$OUTPUT_FILE" == "" ]; then
-	OUTPUT_FILE=${1%.*}
+	OUTPUT_FILE=${POSITIONAL_ARGS%.*}
 fi
 
+# Print the script configuration if verbose mode is enabled
 if [ "$VERBOSE" == "True" ]; then
 	echo "Arguments being set:"
 	echo "	GDB = ${GDB}"
 	echo "	RUN = ${RUN}"
 	echo "	BREAK = ${BREAK}"
 	echo "	QEMU = ${QEMU}"
-	echo "	Input File = $1"
+	echo "	Input File = $POSITIONAL_ARGS"
 	echo "	Output File = $OUTPUT_FILE"
 	echo "	Verbose = $VERBOSE"
 	echo "	32 bit mode = $BITS" 
 	echo ""
 
 	echo "NASM started..."
-
 fi
 
+# Assemble the code based on the selected architecture
 if [ "$BITS" == "True" ]; then
-
-	nasm -f elf64 $1 -o $OUTPUT_FILE.o && echo ""
-
-
+	nasm -f elf64 $POSITIONAL_ARGS -o $OUTPUT_FILE.o && echo ""
 elif [ "$BITS" == "False" ]; then
-
-	nasm -f elf $1 -o $OUTPUT_FILE.o && echo ""
-
+	nasm -f elf $POSITIONAL_ARGS -o $OUTPUT_FILE.o && echo ""
 fi
 
+# Print messages if verbose mode is enabled
 if [ "$VERBOSE" == "True" ]; then
-
-	echo "NASM finished"
-	echo "Linking ..."
-	
-fi
-
-if [ "$VERBOSE" == "True" ]; then
-
 	echo "NASM finished"
 	echo "Linking ..."
 fi
 
+# Link the object file based on the selected architecture
 if [ "$BITS" == "True" ]; then
-
 	ld -m elf_x86_64 $OUTPUT_FILE.o -o $OUTPUT_FILE && echo ""
-
-
 elif [ "$BITS" == "False" ]; then
-
 	ld -m elf_i386 $OUTPUT_FILE.o -o $OUTPUT_FILE && echo ""
-
 fi
 
-
+# Print message if verbose mode is enabled
 if [ "$VERBOSE" == "True" ]; then
-
 	echo "Linking finished"
-
 fi
 
+# Start QEMU if specified
 if [ "$QEMU" == "True" ]; then
-
 	echo "Starting QEMU ..."
 	echo ""
-
 	if [ "$BITS" == "True" ]; then
-	
 		qemu-x86_64 $OUTPUT_FILE && echo ""
-
 	elif [ "$BITS" == "False" ]; then
-
 		qemu-i386 $OUTPUT_FILE && echo ""
-
 	fi
-
 	exit 0
-	
 fi
 
+# Run GDB if specified
 if [ "$GDB" == "True" ]; then
-
 	gdb_params=()
 	gdb_params+=(-ex "b ${BREAK}")
-
 	if [ "$RUN" == "True" ]; then
-
 		gdb_params+=(-ex "r")
-
 	fi
-
 	gdb "${gdb_params[@]}" $OUTPUT_FILE
-
 fi
-
-
-
